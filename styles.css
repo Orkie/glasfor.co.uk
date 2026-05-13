@@ -1,0 +1,29 @@
+:root {
+    --header-bg-color: black;
+    --header-height: 56px;
+}
+
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+    margin: 0;
+}
+
+header {
+    min-width: 100%;
+    height: var(--header-height);
+    background-color: var(--header-bg-color);
+    padding-left: 16px;
+}
+
+header .logo img {
+    padding: 8px 4px 8px 12px;
+    max-height: var(--header-height);
+    vertical-align: middle;
+}
+
