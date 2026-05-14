@@ -27,3 +27,21 @@ header .logo img {
     vertical-align: middle;
 }
 
+.calendar-consent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+    background: #f5f5f5;
+    border: 1px dashed #999;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.calendar-consent:hover,
+.calendar-consent:focus-visible {
+    background: #ebebeb;
+}
+
