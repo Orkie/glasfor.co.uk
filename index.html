@@ -21,35 +21,85 @@
       A page - test
 
       <button type="button" class="calendar-consent" data-calendar-src="https://www.google.com/calendar/embed?color=%23ac725e&amp;embed_style=WyJhdDplbWI6c3QiLCIjZTBlMGUwIiwiI2VkZWRlZCIsIiM0MTg0ZjMiLCJyb2JvdG8iLCIjNjM2MzYzIiw1MDAsIiNmZmYiXQo&amp;eopt=0&amp;mode=month&amp;showCalendars=1&amp;showPrint=0&amp;showTabs=0&amp;showTitle=0&amp;showTz=0&amp;src=1eeqve16m19vvtad0u74hjgqq0@group.calendar.google.com">
-        <strong>Show calendar</strong>
-        <span>Loads from google.com and sets Google cookies. By clicking you agree.</span>
+        <strong>Load calendar</strong>
+        <span>
+          The calendar is embedded from Google. Loading it will share your IP
+          address with Google and set cookies used for personalisation,
+          analytics, and security. See
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's privacy policy</a>.
+          Your choice is remembered for 12 months; you can revoke it at any
+          time using the button shown beneath the calendar.
+        </span>
       </button>
     </section>
     <script>
       (() => {
         const CONSENT_KEY = 'calendar-consent';
-        const button = document.querySelector('.calendar-consent');
-        if (!button) return;
+        const CONSENT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
-        const loadCalendar = () => {
+        const initialButton = document.querySelector('.calendar-consent');
+        if (!initialButton) return;
+
+        const calendarSrc = initialButton.dataset.calendarSrc;
+        const buttonTemplate = initialButton.cloneNode(true);
+
+        const consentIsFresh = () => {
+          const raw = localStorage.getItem(CONSENT_KEY);
+          if (!raw) return false;
+          try {
+            const parsed = JSON.parse(raw);
+            return parsed.granted === true
+              && typeof parsed.timestamp === 'number'
+              && Date.now() - parsed.timestamp < CONSENT_TTL_MS;
+          } catch {
+            return false;
+          }
+        };
+
+        const grantConsent = () => localStorage.setItem(CONSENT_KEY, JSON.stringify({
+          granted: true,
+          timestamp: Date.now()
+        }));
+
+        const revokeConsent = () => localStorage.removeItem(CONSENT_KEY);
+
+        const wireButton = (button) => {
+          button.addEventListener('click', () => {
+            grantConsent();
+            button.replaceWith(buildCalendar());
+          });
+          return button;
+        };
+
+        const buildCalendar = () => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'calendar-wrapper';
+
           const iframe = document.createElement('iframe');
-          iframe.src = button.dataset.calendarSrc;
+          iframe.src = calendarSrc;
           iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
           iframe.setAttribute('frameborder', '0');
           iframe.setAttribute('aria-label', 'Calendar, SAKMC Meets');
           iframe.setAttribute('allowfullscreen', '');
-          button.replaceWith(iframe);
+
+          const revoke = document.createElement('button');
+          revoke.type = 'button';
+          revoke.className = 'calendar-revoke';
+          revoke.textContent = 'Hide calendar and revoke consent';
+          revoke.addEventListener('click', () => {
+            revokeConsent();
+            wrapper.replaceWith(wireButton(buttonTemplate.cloneNode(true)));
+          });
+
+          wrapper.append(iframe, revoke);
+          return wrapper;
         };
 
-        if (localStorage.getItem(CONSENT_KEY) === 'granted') {
-          loadCalendar();
-          return;
+        if (consentIsFresh()) {
+          initialButton.replaceWith(buildCalendar());
+        } else {
+          wireButton(initialButton);
         }
-
-        button.addEventListener('click', () => {
-          localStorage.setItem(CONSENT_KEY, 'granted');
-          loadCalendar();
-        });
       })();
     </script>
   </body>
